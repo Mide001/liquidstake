@@ -64,7 +64,7 @@ const FormsContainer = () => {
             axios.get(ENDPOINT + '/get-pool/' + MD5(publicKey?.toBase58()).toString())
                 .then(response => {
                     // setStakingPoolData(response.data);
-                    console.log(response.data)
+                    // console.log(response.data)
                 })
         }
     }, [stakingData]);
