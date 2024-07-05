@@ -48,11 +48,16 @@ const FormsContainer = () => {
     const [amountIn, setAmountIn] = useState(0);
     const [amountUnstake, setAmountUnstake] = useState(0);
     const [stakingData, setStakingData] = useState<UserStakingInfo | null>(null);
+    const [fetchingStakingData, setFetchStakingData] = useState(false)
     const fetchData = async (publicKey: PublicKey) => {
+        setFetchStakingData(true)
         try {
           const response = await axios.get(ENDPOINT + '/user/' + MD5(publicKey.toBase58()));
           setStakingData(response.data);
+        setFetchStakingData(false)
         } catch (error) {
+        setFetchStakingData(false)
+
           console.error("Error fetching data:", error);
         }
       };
@@ -61,10 +66,7 @@ const FormsContainer = () => {
         if (!connection || !publicKey) return;
         if (connection && publicKey) {
             fetchData(publicKey)
-           // axios.get(ENDPOINT + '/user/' + MD5(publicKey?.toBase58()))
-            //     .then(response => {
-            //         setStakingData(response.data);
-            //     })
+           
         }
     }, [connection, publicKey, messageInfo, stakedSuccess, unstakedSuccess]);
 
@@ -291,12 +293,14 @@ setStakedSuccess(false)
                 <div className='mt-12'>
                     {currentMode === 'staking' ?
                         <StakingForm
+                        fetchingStakingData={fetchingStakingData}
                             amountIn={amountIn}
                             stakingData={stakingData}
                             setAmountIn={setAmountIn}
                             handleStake={handleStake} />
                         :
                         <UnstakingForm
+                        fetchingStakingData={fetchingStakingData}
                             amountUnstake={amountUnstake}
                             setAmountUnstake={setAmountUnstake}
                             stakingData={stakingData}
