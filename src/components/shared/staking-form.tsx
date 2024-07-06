@@ -34,12 +34,8 @@ const StakingForm = ({handleStake, amountIn, setAmountIn, stakingData, fetchingS
                             <>
                                 <h3 className="text-gray-500 text-sm md:text-md font-medium">LiquidInvest Token Balance:</h3>
                                 <p className="font-bold text-black text-lg md:text-xl">{formatBalance(balance)} LQINV</p>
-                            </>
-                    }
 
-
-                </div>
-                <div className="flex justify-between">
+                                <div className="flex justify-between">
                     <h3 className="text-gray-500 font-medium">Staked:</h3>
                     {
                         fetchingStakingData && stakingData === null ? 
@@ -54,6 +50,12 @@ const StakingForm = ({handleStake, amountIn, setAmountIn, stakingData, fetchingS
 
                     }
                 </div>
+                            </>
+                    }
+
+
+                </div>
+              
             </div>
 
             <div className="rounded-md bg-gray-200 p-4 flex items-center justify-between border">
