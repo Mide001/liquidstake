@@ -7,11 +7,12 @@ export function isValidNumber(value : any) {
   return typeof value === 'number' && !isNaN(value) ||
          (typeof value === 'string' && value.trim() !== '' && !isNaN(Number(value)));
 }
-export function formatBalance(balance) {
-  if (balance >= 1000000) {
-      return (balance / 1000000).toFixed(1) + 'M';
+export function formatBalance(balance: string | number) {
+  if(balance === null) return 0
+  if (Number(balance) >= 1000000) {
+      return (Number(balance) / 1000000).toFixed(1) + 'M';
   } else {
-      return balance.toString();
+      return balance
   }
 }
 export  const convertSecondsToTime = (seconds) => {
