@@ -5,6 +5,7 @@ import { useGetAccountBalance } from "../../../hooks/useGetBalance"
 import { Button } from "../ui/button"
 import { Input } from "../ui/input"
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
+import { formatBalance } from "../../../utils/constants";
 
 const StakingForm = ({handleStake, amountIn, setAmountIn, stakingData, fetchingStakingData}) => {
     const { balance } = useGetAccountBalance()
@@ -32,7 +33,7 @@ const StakingForm = ({handleStake, amountIn, setAmountIn, stakingData, fetchingS
                             :
                             <>
                                 <h3 className="text-gray-500 text-sm md:text-md font-medium">LiquidInvest Token Balance:</h3>
-                                <p className="font-bold text-black text-lg md:text-xl">{balance} LQINV</p>
+                                <p className="font-bold text-black text-lg md:text-xl">{formatBalance(balance)} LQINV</p>
                             </>
                     }
 
@@ -49,7 +50,7 @@ const StakingForm = ({handleStake, amountIn, setAmountIn, stakingData, fetchingS
                     </div>
                     : 
 
-                    <p className="font-bold text-black text-lg md:text-xl">{stakingData?.totalStaked}</p>
+                    <p className="font-bold text-black text-lg md:text-xl">{formatBalance(stakingData?.totalStaked)}</p>
 
                     }
                 </div>

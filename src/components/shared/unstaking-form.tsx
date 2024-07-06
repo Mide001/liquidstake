@@ -9,6 +9,7 @@ import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { useGetAccountBalance } from '../../../hooks/useGetBalance';
 import { useAppContext } from '../../../context/app-state';
 import { Shell } from 'lucide-react';
+import { formatBalance } from '../../../utils/constants';
 
 const UnstakingForm = ({handleUnstake, stakingData, amountUnstake, setAmountUnstake, fetchingStakingData}) => {
     const { balance } = useGetAccountBalance()
@@ -38,13 +39,13 @@ const UnstakingForm = ({handleUnstake, stakingData, amountUnstake, setAmountUnst
                     </div>
                     : 
 
-                    <p className="font-bold text-black text-lg md:text-xl">{stakingData?.totalStaked}</p>
+                    <p className="font-bold text-black text-lg md:text-xl">{formatBalance(stakingData?.totalStaked)}</p>
 
                     }
                 </div>
                 <div className="flex justify-between">
                     <h3 className="text-gray-500 font-medium">Unstaked Balance:</h3>
-                    <p className="font-bold text-black text-lg md:text-xl">{balance}</p>
+                    <p className="font-bold text-black text-lg md:text-xl">{formatBalance(balance)}</p>
                 </div>
             </div>
 
