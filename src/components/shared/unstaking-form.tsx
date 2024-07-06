@@ -14,7 +14,7 @@ import { formatBalance } from '../../../utils/constants';
 const UnstakingForm = ({handleUnstake, stakingData, amountUnstake, setAmountUnstake, fetchingStakingData}) => {
     const { balance } = useGetAccountBalance()
     const { publicKey} = useWallet();
- 
+    const { connection } = useConnection()
     const {messageInfo} = useAppContext()
 
 
@@ -39,7 +39,12 @@ const UnstakingForm = ({handleUnstake, stakingData, amountUnstake, setAmountUnst
                     </div>
                     : 
 
-                    <p className="font-bold text-black text-lg md:text-xl">{formatBalance(stakingData?.totalStaked)}</p>
+                    <p className="font-bold text-black text-lg md:text-xl">{
+
+                        !publicKey || !connection ?
+
+                        "0" : formatBalance(stakingData?.totalStaked)
+                    }</p>
 
                     }
                 </div>
