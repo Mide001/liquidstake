@@ -4,47 +4,77 @@ import { useState, useEffect } from 'react';
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
-import { PublicKey, Transaction, SystemProgram } from "@solana/web3.js";
+import { PublicKey, Connection, LAMPORTS_PER_SOL, Transaction, SystemProgram } from "@solana/web3.js";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { useGetAccountBalance } from '../../../hooks/useGetBalance';
 import { useAppContext } from '../../../context/app-state';
 import { Shell } from 'lucide-react';
-import { formatBalance } from '../../../utils/constants';
+import { ENDPOINT, formatBalance } from '../../../utils/constants';
+type RewardInfo = {
+    balance: number;
+    totalStakers: number;
+    userStakedAmount: number;
+    userReward: number;
+} | null;
+const UnstakingForm = ({ handleUnstake, stakingData, amountUnstake, setAmountUnstake, fetchingStakingData }) => {
 
-const UnstakingForm = ({handleUnstake, stakingData, amountUnstake, setAmountUnstake, fetchingStakingData}) => {
+    const [rewardInfo, setRewardInfo] = useState<RewardInfo>(null);
     const { balance } = useGetAccountBalance()
-    const { publicKey} = useWallet();
+    const { publicKey } = useWallet();
     const { connection } = useConnection()
-    const {messageInfo} = useAppContext()
+    const { messageInfo, } = useAppContext()
+    const fetchRewardInfo = async () => {
+        try {
+            const response = await fetch(`${ENDPOINT}/reward-info/${publicKey}`);
+            const data = await response.json();
+
+            if (response.ok) {
+                setRewardInfo(data);
+                // calculateUserReward(data);
+            } else {
+                console.error(data.error);
+            }
+        } catch (error) {
+            console.error('Error fetching reward info:', error);
+        }
+    };
+    useEffect(() => {
+
+        if (!connection || !publicKey) return
+        if (connection && publicKey) {
+
+            fetchRewardInfo();
+        }
 
 
-  
+    }, [publicKey, connection]);
+
     const setMaxAmount = () => {
         setAmountUnstake(stakingData?.totalStaked);
     };
-
+    console.log(rewardInfo?.userReward)
     return (
         <section className='py-8 space-y-6 border rounded-lg px-8 bg-white shadow-lg w-full max-w-[700px]'>
             <h2 className="text-center text-black text-3xl pt-3 pb-5 font-bold">Unstake Your LQINV Tokens</h2>
-            
+
             <div className="flex flex-col space-y-4 bg-gray-100 w-full py-4 px-4 rounded-md shadow-sm">
                 <div className="flex justify-between">
                     <h3 className="text-gray-500 font-medium">Staked Balance:</h3>
                     {
-                        fetchingStakingData && stakingData === null ? 
-                        <div className="space-y-2.5 animate-pulse max-w-sm">
-                        fetching staked balance
-                       
+                        fetchingStakingData && stakingData === null ?
+                            <div className="space-y-2.5 animate-pulse max-w-sm">
+                                fetching staked balance
 
-                    </div>
-                    : 
 
-                    <p className="font-bold text-black text-lg md:text-xl">{
+                            </div>
+                            :
 
-                        !publicKey || !connection ?
+                            <p className="font-bold text-black text-lg md:text-xl">{
 
-                        "0" : formatBalance(stakingData?.totalStaked)
-                    }</p>
+                                !publicKey || !connection ?
+
+                                    "0" : formatBalance(stakingData?.totalStaked)
+                            }</p>
 
                     }
                 </div>
@@ -52,9 +82,19 @@ const UnstakingForm = ({handleUnstake, stakingData, amountUnstake, setAmountUnst
                     <h3 className="text-gray-500 font-medium">Unstaked Balance:</h3>
                     {
                         !publicKey || !connection ?
-                        <p className="font-bold text-black text-lg md:text-xl">0</p> :
+                            <p className="font-bold text-black text-lg md:text-xl">0</p> :
 
-                    <p className="font-bold text-black text-lg md:text-xl">{formatBalance(balance)}</p>
+                            <p className="font-bold text-black text-lg md:text-xl">{formatBalance(balance)}</p>
+                    }
+                </div>
+
+                <div className="flex justify-between">
+                    <h3 className="text-gray-500 font-medium">Estimated Rewards:</h3>
+                    {
+                        !publicKey || !connection ?
+                            <p className="font-bold text-black text-lg md:text-xl">0</p> :
+
+                            <p className="font-bold text-black text-lg md:text-xl">{rewardInfo?.userReward} Sol</p>
                     }
                 </div>
             </div>
@@ -65,7 +105,7 @@ const UnstakingForm = ({handleUnstake, stakingData, amountUnstake, setAmountUnst
                     <Input
                         placeholder="0.00"
                         value={amountUnstake}
-                       
+
                         onChange={(e) => setAmountUnstake(e.target.value)}
                         className="bg-transparent text-xl text-right border-none outline-none focus:ring-0 flex-1"
                     />
@@ -77,7 +117,7 @@ const UnstakingForm = ({handleUnstake, stakingData, amountUnstake, setAmountUnst
 
             <div className="flex flex-col space-y-4">
                 <div className="flex justify-between">
-                    <h4 className="text-gray-500 font-medium">Estimated Unstake Time:</h4>
+                    <h4 className="text-gray-500 font-medium">Minimum Staking Time:</h4>
                     <p className="font-bold text-black text-lg md:text-xl">24 Hours</p>
                 </div>
             </div>
@@ -86,7 +126,7 @@ const UnstakingForm = ({handleUnstake, stakingData, amountUnstake, setAmountUnst
 
                 className="w-full py-4 bg-red-600 hover:bg-red-700 text-white font-bold text-lg rounded-md shadow-md transition-all duration-300"
                 onClick={handleUnstake}
-                disabled={!publicKey  || messageInfo.isLoading }
+                disabled={!publicKey || messageInfo.isLoading}
             >
                 {messageInfo.isLoading && <Shell color='#00F5FF' className='animate-spin' />}
 
