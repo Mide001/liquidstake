@@ -6,6 +6,7 @@ import { Button } from "../ui/button"
 import { Input } from "../ui/input"
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { formatBalance } from "../../../utils/constants";
+import CountdownTimer from "./countdown-timer";
 
 const StakingForm = ({handleStake, amountIn, setAmountIn, stakingData, fetchingStakingData}) => {
     const { balance } = useGetAccountBalance()
@@ -73,10 +74,11 @@ const StakingForm = ({handleStake, amountIn, setAmountIn, stakingData, fetchingS
             </div>
 
             <div className="flex flex-col space-y-4">
-                <div className="flex justify-between">
+                {/* <div className="flex justify-between">
                     <h4 className="text-gray-500 font-medium">Estimated Rewards:</h4>
                     <p className="font-bold text-black text-lg md:text-xl">Sol</p>
-                </div>
+                </div> */}
+                <CountdownTimer />
                 {/* <div className="flex justify-between">
                     <h4 className="text-gray-500 font-medium">APY:</h4>
                     <p className="font-bold text-black text-lg md:text-xl">12.5%</p>
