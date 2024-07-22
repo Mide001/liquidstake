@@ -74,15 +74,9 @@ const StakingForm = ({handleStake, amountIn, setAmountIn, stakingData, fetchingS
             </div>
 
             <div className="flex flex-col space-y-4">
-                {/* <div className="flex justify-between">
-                    <h4 className="text-gray-500 font-medium">Estimated Rewards:</h4>
-                    <p className="font-bold text-black text-lg md:text-xl">Sol</p>
-                </div> */}
+               
                 <CountdownTimer />
-                {/* <div className="flex justify-between">
-                    <h4 className="text-gray-500 font-medium">APY:</h4>
-                    <p className="font-bold text-black text-lg md:text-xl">12.5%</p>
-                </div> */}
+               
             </div>
 
             <Button

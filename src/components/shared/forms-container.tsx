@@ -1,5 +1,5 @@
 "use client"
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useAppContext } from '../../../context/app-state'
 import { Button } from '../ui/button'
 import MaxwidthWrapper from './max-width-wrapper'
@@ -13,38 +13,29 @@ import { SHA256, MD5 } from 'crypto-js';
 import axios from 'axios'
 import { useToast } from '../ui/use-toast'
 import { encode } from 'bs58';
+import { useGetAccountBalance } from '../../../hooks/useGetBalance'
+import useSWR from 'swr'
+import { APIRoutes, fetcher } from '../../../utils/routes'
 
 
 type StakingPool = {
-  Id: number;
-  apy: number;
-  lockDuration: number;
+    Id: number;
+    apy: number;
+    lockDuration: number;
 };
 
-type UserStakingInfo = {
-  claimableTokens: number;
-  lastUpdate: number;
-  stakingDuration: number;
-  stakingPool: StakingPool;
-  stakingStartDate: number;
-  totalStaked: number;
-  userId: string;
-  walletAddress: string;
-};
-const fetcher = (url) => axios.get(url).then((res) => res.data);
+
 // Initialize Solana Wallet Adapter
-const network = "https://wiser-quick-breeze.solana-mainnet.quiknode.pro/57f11f6c08d1cff24525eeea61023cde215a90df/";
-const Conconnection = new Connection("https://solana-mainnet.g.alchemy.com/v2/A2FYWz9NjqjC6UtvHFvTwOW7Cj1sBP__", "confirmed");
 
 const FormsContainer = () => {
     const { connection } = useConnection();
-    const { publicKey, wallet, signTransaction, signMessage} = useWallet();
+    const { publicKey, signTransaction, signMessage } = useWallet();
     const { currentMode, setCurrentMode } = useAppContext();
     const { toast } = useToast() // Initialize useToast
     const [stakedSuccess, setStakedSuccess] = useState(false)
-    const[unstakedSuccess, setUnstakedSuccess] = useState(false)
-   const {messageInfo,setMessageInfo} = useAppContext()
- 
+    const [unstakedSuccess, setUnstakedSuccess] = useState(false)
+    const { messageInfo, setMessageInfo } = useAppContext()
+    const { balance } = useGetAccountBalance()
     const [amountIn, setAmountIn] = useState(0);
     const [amountUnstake, setAmountUnstake] = useState(0);
     const [stakingData, setStakingData] = useState<UserStakingInfo | null>(null);
@@ -52,21 +43,21 @@ const FormsContainer = () => {
     const fetchData = async (publicKey: PublicKey) => {
         setFetchStakingData(true)
         try {
-          const response = await axios.get(ENDPOINT + '/user/' + MD5(publicKey.toBase58()));
-          setStakingData(response.data);
-        setFetchStakingData(false)
+            const response = await axios.get(ENDPOINT + '/user/' + MD5(publicKey.toBase58()));
+            setStakingData(response.data);
+            setFetchStakingData(false)
         } catch (error) {
-        setFetchStakingData(false)
+            setFetchStakingData(false)
 
-          console.error("Error fetching data:", error);
+            console.error("Error fetching data:", error);
         }
-      };
-
+    };
+    
     useEffect(() => {
         if (!connection || !publicKey) return;
         if (connection && publicKey) {
             fetchData(publicKey)
-           
+
         }
     }, [connection, publicKey, messageInfo, stakedSuccess, unstakedSuccess]);
 
@@ -78,10 +69,11 @@ const FormsContainer = () => {
                     // console.log(response.data)
                 })
         }
-    }, [stakingData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [publicKey]);
 
-   
-   
+
+
 
     async function transferToken(sender, amount) {
         try {
@@ -122,31 +114,38 @@ const FormsContainer = () => {
         }
     }
     const handleStake = async () => {
- 
-        if ( amountIn === 0 || amountIn === null || amountIn < 100 || isValidNumber(amountIn) === false ) {
+        if (amountIn === 0 || amountIn === null || amountIn < 100 || isValidNumber(amountIn) === false) {
             toast({
-              variant: "destructive",
-              title: "Invalid Amount",
-              description: "Please enter a valid amount. Minimum Stake is 100 ",
+                variant: "destructive",
+                title: "Invalid Amount",
+                description: "Please enter a valid amount. Minimum Stake is 100 ",
             })
             return;
-          }
+        }
+        if(amountIn > Number(balance)){
+            toast({
+                variant: "destructive",
+                title: "Insufficient Balance",
+                description: "Please buy more LQINV Tokens to buy more",
+            })
+            return;
+        }
 
-setStakedSuccess(true)
+        setStakedSuccess(true)
         setMessageInfo({ isLoading: true, messageText: 'Processing stake transaction...', messageType: 'loading' });
-       
+
         const transactionId = await transferToken(publicKey?.toBase58(), amountIn);
-       
+
         let signature: any;
         try {
             const res = await axios.get(ENDPOINT + `/get-signature/${publicKey?.toBase58()}/${amountIn}`)
-            signature =  res.data.signature;
+            signature = res.data.signature;
         } catch (error) {
             console.log(error)
         }
-        
+
         if (transactionId) {
-            
+
             setTimeout(async () => {
                 await axios.post(ENDPOINT + '/stake', {
                     singature: signature,
@@ -158,7 +157,7 @@ setStakedSuccess(true)
                     .then(response => {
                         setMessageInfo({ isLoading: false, messageText: 'Transaction successful', messageType: 'success' });
                         setAmountIn(0);
-                        
+
                         toast({
                             title: "Success",
                             description: "Stake transaction completed successfully",
@@ -178,7 +177,7 @@ setStakedSuccess(true)
                     });
             }, 1500);
 
-setStakedSuccess(false)
+            setStakedSuccess(false)
         } else {
             setMessageInfo({ isLoading: false, messageText: 'Transaction failed', messageType: 'error' });
             setStakedSuccess(false)
@@ -190,28 +189,28 @@ setStakedSuccess(false)
             });
         }
     }
-  
-    const handleUnstake = async () => {
-        if ( amountUnstake === 0 || amountUnstake === null || amountUnstake < 100 || isValidNumber(amountUnstake) === false ) {
+
+const handleUnstake = async () => {
+        if (amountUnstake === 0 || amountUnstake === null || amountUnstake < 100 || isValidNumber(amountUnstake) === false) {
             toast({
-              variant: "destructive",
-              title: "Invalid Amount",
-              description: "Please enter a valid amount. Minimum is 100 ",
+                variant: "destructive",
+                title: "Invalid Amount",
+                description: "Please enter a valid amount. Minimum is 100 ",
             })
             return;
-          }
-          if(amountUnstake > stakingData?.totalStaked){
+        }
+        if (amountUnstake > stakingData?.totalStaked) {
             toast({
                 variant: "destructive",
                 title: "Adjust Amount",
                 description: "You don't have enough balance ",
-              })
-              return;
-          }
-          setUnstakedSuccess(true)
+            })
+            return;
+        }
+        setUnstakedSuccess(true)
         setMessageInfo({ isLoading: true, messageText: 'Processing transaction...', messageType: 'loading' });
         const res = await axios.get(ENDPOINT + `/get-signature/${publicKey?.toBase58()}/${amountIn}`)
-        
+
 
         const message = res.data.signature;
         console.log(message)
@@ -220,7 +219,7 @@ setStakedSuccess(false)
         let signedMessage = null;
 
         try {
-       
+
             signedMessage = await signMessage(encodedMessage);
         } catch (error) {
             setMessageInfo({ isLoading: false, messageText: `Error: ${error.message.replace('Error: ', '')}`, messageType: 'error' });
@@ -249,7 +248,7 @@ setStakedSuccess(false)
             const messageError = error.response.data.error || error.message.replace('Error: ', '') || 'Transaction failed';
             setMessageInfo({ isLoading: false, messageText: `Error: ${messageError}`, messageType: 'error' });
             setUnstakedSuccess(false)
-            
+
             toast({
                 title: "Error",
                 variant: "destructive",
@@ -267,13 +266,13 @@ setStakedSuccess(false)
         <MaxwidthWrapper>
             <section className='py-8 ease-in-out duration-300 transition-all flex items-center justify-center flex-col'>
                 <div className='bg-white py-2 ease-in-out duration-300 transition-all rounded-2xl px-3 flex'>
-                    <button 
+                    <button
                         onClick={() => setCurrentMode('staking')}
                         disabled={messageInfo.isLoading}
                         className={
                             currentMode === 'staking' ?
-                            'bg-green-600 px-4 cursor-pointer py-3 rounded-3xl text-white font-bold' :
-                            'px-4 py-3 cursor-pointer text-black font-bold'
+                                'bg-green-600 px-4 cursor-pointer py-3 rounded-3xl text-white font-bold' :
+                                'px-4 py-3 cursor-pointer text-black font-bold'
                         }>
                         Staking
                     </button>
@@ -283,8 +282,8 @@ setStakedSuccess(false)
                         onClick={() => setCurrentMode('unstaking')}
                         className={
                             currentMode === 'unstaking' ?
-                            'bg-green-600 cursor-pointer px-4 py-3 rounded-3xl text-white font-bold' :
-                            'px-4 py-3 cursor-pointer text-black font-bold'
+                                'bg-green-600 cursor-pointer px-4 py-3 rounded-3xl text-white font-bold' :
+                                'px-4 py-3 cursor-pointer text-black font-bold'
                         }>
                         Unstaking
                     </button>
@@ -293,21 +292,21 @@ setStakedSuccess(false)
                 <div className='mt-12'>
                     {currentMode === 'staking' ?
                         <StakingForm
-                        fetchingStakingData={fetchingStakingData}
+                            fetchingStakingData={fetchingStakingData}
                             amountIn={amountIn}
                             stakingData={stakingData}
                             setAmountIn={setAmountIn}
                             handleStake={handleStake} />
                         :
                         <UnstakingForm
-                        fetchingStakingData={fetchingStakingData}
+                            fetchingStakingData={fetchingStakingData}
                             amountUnstake={amountUnstake}
                             setAmountUnstake={setAmountUnstake}
                             stakingData={stakingData}
                             handleUnstake={handleUnstake}
-                            // handleClaim={handleClaim} 
-                            
-                            />
+                        // handleClaim={handleClaim} 
+
+                        />
                     }
                 </div>
             </section>
